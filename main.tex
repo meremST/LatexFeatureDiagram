@@ -1,0 +1,117 @@
+\documentclass[border=5pt,tikz,multi]{standalone}
+\usepackage{forest}
+\usepackage{tikz}
+
+% Comment the following line to disable legend
+\newcommand*{\WITHLEGEND}{}
+
+\forestset{
+  concrete colour/.code={\colorlet{concretecol}{#1}},
+  abstract colour/.code={\colorlet{abstractcol}{#1}},
+  draw colour/.code={\colorlet{drawcol}{#1}},
+  concrete colour=gray,
+  abstract colour=white,
+  draw colour=black,
+  /tikz/mandatory/.style={circle, scale=0.8, fill=drawcol, draw=drawcol},
+  /tikz/optional/.style={circle, scale=0.8, draw=drawcol, fill=white},
+  /tikz/concrete/.style={fill=concretecol, draw=drawcol},
+  /tikz/abstract/.style={fill=abstractcol, draw=drawcol},
+  /tikz/or/.style={},
+  /tikz/xor/.style={},
+  mandatory/.style={edge label={node [mandatory] {}}},
+  optional/.style={edge label={node [optional] {}}},
+  or/.style={for first={disjunct}},
+  disjunct/.style={
+    tikz+={\path (.parent) coordinate (A) -- (!u.children) coordinate (B) -- (!ul.parent) coordinate (C) pic [fill=drawcol] {angle};} %draw, angle radius=20pt,
+  },
+  xor/.style={for first={disjunct2}},
+  disjunct2/.style={
+    tikz+={\path (.parent) coordinate (A) -- (!u.children) coordinate (B) -- (!ul.parent) coordinate (C)  pic[draw, fill=white] {angle};}
+  },
+  disjunction tree/.style={
+    where={isodd(n_children())}{
+      for n={int((n_children()+1)/2)}{calign with current},
+    }{
+      calign=midpoint,
+    },
+    before typesetting nodes={
+      for nodewalk={}{
+        or,
+      },
+      tikz+={
+      %Legend draw
+      \ifdefined\WITHLEGEND
+        [font=\sffamily]
+        %xshift, yshift move the legend position
+        \node (l) [anchor=south west, xshift=350, yshift=105pt] at (current bounding box.south west) {Legend};
+        \foreach \i/\j [remember=\i as \k (initially l)] in {
+            mandatory/Mandatory,
+            optional/Optional,
+            or/Or,
+            xor/Xor,
+            abstract/Abstract,
+            concrete/Concrete,
+            }
+        {
+          \node (\i) [below=20pt of \k.north, anchor=north, text centered, \i, minimum width=5pt,] {};
+          \node (\j) [right=15pt of \i.center -| mandatory.west, anchor=west] {\j};
+        };
+        \draw [drawcol] (or.south west) coordinate (A) -- (or.north) coordinate (B) -- (or.south east) coordinate (C) pic [fill=drawcol, angle radius=5pt] {angle};
+        \draw [drawcol] (xor.south west) coordinate (A) -- (xor.north) coordinate (B) -- (xor.south east) coordinate (C) pic [draw, fill=white, angle radius=5pt] {angle};
+        \foreach \i in {mandatory,optional} \draw [darkgray] (\i.north east) -- +(45:5pt);
+        %change the spacer position if needed
+        \node (c) [below=0pt of Concrete.south] {}; % Xor.south
+        \scoped[on background layer]{\node [draw, fill=white, blur shadow, % can comment blur shadow here
+        fit=(l) 
+        (Mandatory) 
+        (Optional) 
+        (Or) 
+        (Xor)
+        (Abstract) 
+        (Concrete) 
+        (c), 
+        rounded corners] {};}
+    \fi
+      },
+    },
+    for tree={
+      parent anchor=children,
+      child anchor=parent,
+      %align=center,
+      %inner sep=2pt,
+      l'+=10mm,
+      blur shadow, % can comment blur shadow here
+      rounded corners,
+      text height=2ex,
+      text depth=.5ex,
+      font=\sffamily,
+      or/.append,
+      abstract,
+      concrete,
+    },
+  },
+}
+
+\begin{document}
+\usetikzlibrary{angles,shadows.blur,positioning,backgrounds}
+
+\begin{forest} 
+  disjunction tree,
+  concrete colour=blue!85!cyan!40,
+  abstract colour=blue!85!cyan!15,
+  draw colour=darkgray,
+  [Coffee Mugs, abstract
+    [Materials, mandatory, xor,
+        [Ceramic]
+        [Glass]
+    ]
+    [Microwave Safe, mandatory]
+    [Decorations, optional, or
+        [Cool logo]
+        [Inspirational pictures]
+        [Sarcastic catchphrase]
+    ]
+    [Handle, optional]
+  ]
+\end{forest}
+\end{document}
